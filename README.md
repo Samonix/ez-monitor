@@ -13,7 +13,7 @@ EZ MONITOR - вебкабінет для мережі АЗС на базі PTS-2
 - `db/prisma/schema.prisma` - PostgreSQL модель.
 - `vendor/documents` - локальні PDF від постачальника.
 - `vendor/prototype` - vendor-прототипи UI/стилів для контексту.
-- `docs/` і `.agents/` - архітектура, PTS-2 нотатки, агентські флоу.
+- `doc/` і `.agents/` - архітектура, PTS-2 нотатки, агентські флоу.
 
 ## Режими обміну з PTS-2
 
