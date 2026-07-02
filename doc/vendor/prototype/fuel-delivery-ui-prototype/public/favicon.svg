@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Fuel Delivery">
+  <rect width="64" height="64" rx="12" fill="#cc785c"/>
+  <path d="M16 22h24v20H16z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M40 28h7l5 6v8H40z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="24" cy="45" r="4" fill="#fff"/>
+  <circle cx="47" cy="45" r="4" fill="#fff"/>
+  <path d="M23 30h10M23 36h7" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+</svg>

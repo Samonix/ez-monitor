@@ -1,0 +1,8 @@
+{
+  "name": "@ez-monitor/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "tsx watch src/main.ts", "build": "tsc -p tsconfig.json", "start": "node dist/main.js", "typecheck": "tsc --noEmit", "test": "vitest run --passWithNoTests", "lint": "echo \"lint placeholder\"" },
+  "dependencies": { "@ez-monitor/domain": "workspace:*", "@ez-monitor/pts-protocol": "workspace:*" }
+}

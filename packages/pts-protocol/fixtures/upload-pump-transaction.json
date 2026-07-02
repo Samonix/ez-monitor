@@ -1,0 +1,32 @@
+{
+  "Protocol": "jsonPTS",
+  "PtsId": "003A003A3435510938393730",
+  "Packets": [{
+    "Id": 123,
+    "Type": "UploadPumpTransaction",
+    "Data": {
+      "DateTimeStart": "2026-07-02T09:12:01",
+      "DateTime": "2026-07-02T09:15:14",
+      "Pump": 1,
+      "Nozzle": 2,
+      "FuelGradeId": 2,
+      "FuelGradeName": "Diesel",
+      "Tank": 1,
+      "Transaction": 15,
+      "Volume": 52.4,
+      "TCVolume": 51.9,
+      "Price": 56.30,
+      "Amount": 2950.12,
+      "TotalVolume": 1231.15,
+      "TotalAmount": 45611.50,
+      "Tag": "1234567890ABCDEF",
+      "IsRemoteTag": true,
+      "IsTest": false,
+      "CustomData": "MVP",
+      "UserId": 1,
+      "PumpTransactionsUploaded": 10,
+      "PumpTransactionsTotal": 15,
+      "ConfigurationId": "1234ABCD"
+    }
+  }]
+}

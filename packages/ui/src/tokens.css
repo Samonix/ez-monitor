@@ -1,0 +1,18 @@
+:root {
+  --ez-slate: #141413;
+  --ez-ink: #22221f;
+  --ez-muted: #74736b;
+  --ez-surface: #ffffff;
+  --ez-surface-2: #faf9f5;
+  --ez-bg: #f0eee6;
+  --ez-line: rgba(20, 20, 19, 0.16);
+  --ez-accent: #d97757;
+  --ez-info: #5c7ca3;
+  --ez-success: #788c5d;
+  --ez-warning: #c78e3f;
+  --ez-danger: #b04a4a;
+  --ez-radius-sm: 8px;
+  --ez-radius-md: 12px;
+  --ez-font-sans: Inter, "Segoe UI", Arial, sans-serif;
+  --ez-font-mono: "JetBrains Mono", Consolas, monospace;
+}

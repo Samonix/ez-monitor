@@ -1,0 +1,82 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ez-monitor-postgres
+    environment:
+      POSTGRES_DB: ez_monitor
+      POSTGRES_USER: ez_monitor
+      POSTGRES_PASSWORD: ez_monitor_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - ez_monitor_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ez_monitor -d ez_monitor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ez-monitor-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ez_monitor_redis:/data
+
+  api:
+    image: node:22-alpine
+    container_name: ez-monitor-api
+    working_dir: /workspace
+    command: sh -lc "corepack enable && pnpm install && pnpm db:generate && pnpm --filter @ez-monitor/api dev"
+    env_file:
+      - ../../.env.example
+    environment:
+      DATABASE_URL: postgresql://ez_monitor:ez_monitor_dev@postgres:5432/ez_monitor?schema=public
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    image: node:22-alpine
+    container_name: ez-monitor-worker
+    working_dir: /workspace
+    command: sh -lc "corepack enable && pnpm install && pnpm --filter @ez-monitor/worker dev"
+    env_file:
+      - ../../.env.example
+    environment:
+      DATABASE_URL: postgresql://ez_monitor:ez_monitor_dev@postgres:5432/ez_monitor?schema=public
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ../../:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  web:
+    image: node:22-alpine
+    container_name: ez-monitor-web
+    working_dir: /workspace
+    command: sh -lc "corepack enable && pnpm install && pnpm --filter @ez-monitor/web dev -- --host 0.0.0.0"
+    environment:
+      VITE_API_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../../:/workspace
+    depends_on:
+      - api
+
+volumes:
+  ez_monitor_pg:
+  ez_monitor_redis:

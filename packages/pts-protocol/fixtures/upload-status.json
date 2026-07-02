@@ -1,0 +1,14 @@
+{
+  "Protocol": "jsonPTS",
+  "PtsId": "003A003A3435510938393730",
+  "Packets": [{
+    "Id": 54443,
+    "Type": "UploadStatus",
+    "Data": {
+      "ConfigurationId": "747a3fe2",
+      "DateTime": "2026-07-02T10:30:00",
+      "Pumps": { "IdleStatus": { "Ids": [1, 2], "NozzlesUp": [0, 0], "Tags": ["", ""] } },
+      "UploadedRecordsInformation": { "PumpTransactionsUploaded": 10, "PumpTransactionsTotal": 15, "TankMeasurementsUploaded": 712, "TankMeasurementsTotal": 712 }
+    }
+  }]
+}

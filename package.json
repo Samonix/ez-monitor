@@ -1,0 +1,43 @@
+{
+    "name":  "ez-monitor",
+    "version":  "0.1.0",
+    "private":  true,
+    "description":  "EZ MONITOR web cabinet for fuel station networks and PTS-2 controllers.",
+    "packageManager":  "pnpm@10.17.1",
+    "engines":  {
+                    "node":  "\u003e=22.0.0"
+                },
+    "scripts":  {
+                    "dev":  "pnpm prepare:packages \u0026\u0026 pnpm --parallel --filter @ez-monitor/api --filter @ez-monitor/web dev",
+                    "dev:api":  "pnpm prepare:packages \u0026\u0026 pnpm --filter @ez-monitor/api dev",
+                    "dev:web":  "pnpm prepare:packages \u0026\u0026 pnpm --filter @ez-monitor/web dev",
+                    "dev:worker":  "pnpm prepare:packages \u0026\u0026 pnpm --filter @ez-monitor/worker dev",
+                    "build":  "pnpm -r build",
+                    "typecheck":  "pnpm prepare:packages \u0026\u0026 pnpm -r typecheck",
+                    "test":  "pnpm -r test",
+                    "db:generate":  "pnpm exec prisma generate --schema db/prisma/schema.prisma",
+                    "db:migrate":  "pnpm exec prisma migrate dev --schema db/prisma/schema.prisma",
+                    "db:seed":  "tsx db/seed/seed.ts",
+                    "pts:replay":  "tsx packages/pts-protocol/src/replay.ts",
+                    "prepare:packages":  "pnpm --filter @ez-monitor/domain --filter @ez-monitor/pts-protocol --filter @ez-monitor/ui build"
+                },
+    "devDependencies":  {
+                            "@types/node":  "26.1.0",
+                            "prisma":  "6.19.2",
+                            "tsx":  "4.22.4",
+                            "typescript":  "6.0.3",
+                            "vitest":  "4.1.9"
+                        },
+    "pnpm":  {
+                 "onlyBuiltDependencies":  [
+                                               "@nestjs/core",
+                                               "@prisma/client",
+                                               "@prisma/engines",
+                                               "esbuild",
+                                               "prisma"
+                                           ]
+             },
+    "dependencies":  {
+                         "@prisma/client":  "6.19.2"
+                     }
+}

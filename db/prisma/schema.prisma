@@ -1,0 +1,596 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StationStatus {
+  ACTIVE
+  MAINTENANCE
+  OFFLINE
+}
+
+enum ControllerMode {
+  HTTP_UPLOAD
+  WEBSOCKET_DISABLED
+  SERVICE
+}
+
+enum PtsPacketDirection {
+  INCOMING
+  OUTGOING
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  DISABLED
+}
+
+enum CardStatus {
+  ACTIVE
+  BLOCKED
+  EXPIRED
+}
+
+enum CardAccountType {
+  PREPAID
+  CREDIT
+  LIMIT
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum LedgerDirection {
+  CREDIT
+  DEBIT
+  HOLD
+  RELEASE
+}
+
+enum EventDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Organization {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  taxId       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  auditLogs     AuditLog[]
+  cards         Card[]
+  eventDeliveries EventDelivery[]
+  fuelGrades    FuelGrade[]
+  notificationSubscriptions NotificationSubscription[]
+  roles         Role[]
+  stations      Station[]
+  users         User[]
+
+  @@index([slug])
+}
+
+model Station {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @db.Uuid
+  number         Int
+  name           String
+  city           String?
+  address        String?
+  status         StationStatus @default(ACTIVE)
+  timezone       String        @default("Europe/Kiev")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  alerts       Alert[]
+  authorizations CardAuthorization[]
+  cardLedger   CardLedger[]
+  configurationSnapshots ControllerConfigurationSnapshot[]
+  controllers  Controller[]
+  deliveries   InTankDelivery[]
+  eventDeliveries EventDelivery[]
+  payments     Payment[]
+  pumps        Pump[]
+  rawPackets   RawPtsPacket[]
+  readers      Reader[]
+  shifts       Shift[]
+  stationScopes StationScope[]
+  statusSnapshots ControllerStatusSnapshot[]
+  tankMeasurements TankMeasurement[]
+  tanks        Tank[]
+  transactions PumpTransaction[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId, status])
+}
+
+model Controller {
+  id                String         @id @default(uuid()) @db.Uuid
+  stationId          String         @db.Uuid
+  ptsId              String         @unique
+  name               String
+  mode               ControllerMode @default(HTTP_UPLOAD)
+  firmwareVersion    String?
+  ipHint             String?
+  isActive           Boolean        @default(true)
+  basicUsername      String?
+  basicPasswordHash  String?
+  secretKeyHash      String?
+  lastSeenAt         DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  alerts Alert[]
+  authorizations CardAuthorization[]
+  configurationSnapshots ControllerConfigurationSnapshot[]
+  deliveries InTankDelivery[]
+  payments Payment[]
+  rawPackets RawPtsPacket[]
+  readers Reader[]
+  shifts Shift[]
+  statusSnapshots ControllerStatusSnapshot[]
+  tankMeasurements TankMeasurement[]
+  transactions PumpTransaction[]
+
+  @@index([stationId, isActive])
+}
+
+model FuelGrade {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  code           Int
+  name           String
+  color          String   @default("#2f7df6")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  nozzles Nozzle[]
+  tanks Tank[]
+
+  @@unique([organizationId, code])
+}
+
+model Pump {
+  id        String   @id @default(uuid()) @db.Uuid
+  stationId String   @db.Uuid
+  number    Int
+  name      String?
+  status    String   @default("unknown")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  nozzles Nozzle[]
+
+  @@unique([stationId, number])
+}
+
+model Nozzle {
+  id          String  @id @default(uuid()) @db.Uuid
+  pumpId      String  @db.Uuid
+  fuelGradeId String? @db.Uuid
+  number      Int
+  status      String  @default("unknown")
+
+  pump Pump @relation(fields: [pumpId], references: [id], onDelete: Cascade)
+  fuelGrade FuelGrade? @relation(fields: [fuelGradeId], references: [id])
+
+  @@unique([pumpId, number])
+}
+
+model Tank {
+  id             String   @id @default(uuid()) @db.Uuid
+  stationId       String   @db.Uuid
+  fuelGradeId     String?  @db.Uuid
+  number          Int
+  name            String?
+  capacityLiters  Decimal  @db.Decimal(14, 3)
+  deadStockLiters Decimal? @db.Decimal(14, 3)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  fuelGrade FuelGrade? @relation(fields: [fuelGradeId], references: [id])
+
+  @@unique([stationId, number])
+}
+
+model Reader {
+  id           String   @id @default(uuid()) @db.Uuid
+  stationId    String   @db.Uuid
+  controllerId String?  @db.Uuid
+  number       Int
+  kind         String
+  name         String?
+  createdAt    DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller? @relation(fields: [controllerId], references: [id])
+
+  @@unique([stationId, number, kind])
+}
+
+model RawPtsPacket {
+  id                String             @id @default(uuid()) @db.Uuid
+  stationId          String?            @db.Uuid
+  controllerId       String?            @db.Uuid
+  ptsId              String?
+  packetId           Int?
+  packetType         String
+  direction          PtsPacketDirection @default(INCOMING)
+  packetFingerprint  String             @unique
+  envelope           Json
+  responseEnvelope   Json?
+  normalizedAt       DateTime?
+  createdAt          DateTime           @default(now())
+
+  station Station? @relation(fields: [stationId], references: [id])
+  controller Controller? @relation(fields: [controllerId], references: [id])
+  alerts Alert[]
+  authorizations CardAuthorization[]
+  deliveries InTankDelivery[]
+  payments Payment[]
+  shifts Shift[]
+  tankMeasurements TankMeasurement[]
+  transactions PumpTransaction[]
+
+  @@index([ptsId, packetType, packetId])
+  @@index([createdAt])
+}
+
+model ControllerStatusSnapshot {
+  id           String   @id @default(uuid()) @db.Uuid
+  stationId    String   @db.Uuid
+  controllerId String   @db.Uuid
+  status        String
+  pumps         Json?
+  tanks         Json?
+  alarms        String[]
+  receivedAt    DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller @relation(fields: [controllerId], references: [id], onDelete: Cascade)
+
+  @@index([stationId, receivedAt])
+}
+
+model ControllerConfigurationSnapshot {
+  id           String   @id @default(uuid()) @db.Uuid
+  stationId    String   @db.Uuid
+  controllerId String   @db.Uuid
+  versionHash  String
+  configuration Json
+  receivedAt   DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller @relation(fields: [controllerId], references: [id], onDelete: Cascade)
+
+  @@unique([controllerId, versionHash])
+}
+
+model PumpTransaction {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  stationId      String   @db.Uuid
+  controllerId   String   @db.Uuid
+  rawPacketId    String?  @db.Uuid
+  externalId     String
+  packetId       Int?
+  pump           Int
+  nozzle         Int?
+  fuelGradeCode  Int?
+  volumeLiters   Decimal  @db.Decimal(14, 3)
+  amount         Decimal  @db.Decimal(14, 2)
+  price          Decimal? @db.Decimal(14, 3)
+  currency       String   @default("UAH")
+  tag            String?
+  cardId         String?  @db.Uuid
+  operatedAt     DateTime
+  receivedAt     DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller @relation(fields: [controllerId], references: [id], onDelete: Cascade)
+  rawPacket RawPtsPacket? @relation(fields: [rawPacketId], references: [id])
+  card Card? @relation(fields: [cardId], references: [id])
+  cardLedger CardLedger[]
+
+  @@unique([controllerId, externalId])
+  @@index([organizationId, operatedAt])
+  @@index([stationId, operatedAt])
+}
+
+model TankMeasurement {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  stationId      String   @db.Uuid
+  controllerId   String   @db.Uuid
+  rawPacketId    String?  @db.Uuid
+  tank           Int
+  fuelGradeCode  Int?
+  productHeightMm Decimal? @db.Decimal(14, 3)
+  waterHeightMm   Decimal? @db.Decimal(14, 3)
+  temperatureC    Decimal? @db.Decimal(8, 3)
+  volumeLiters    Decimal? @db.Decimal(14, 3)
+  ullageLiters    Decimal? @db.Decimal(14, 3)
+  measuredAt      DateTime
+  receivedAt      DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller @relation(fields: [controllerId], references: [id], onDelete: Cascade)
+  rawPacket RawPtsPacket? @relation(fields: [rawPacketId], references: [id])
+
+  @@index([stationId, tank, measuredAt])
+}
+
+model InTankDelivery {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  stationId      String   @db.Uuid
+  controllerId   String   @db.Uuid
+  rawPacketId    String?  @db.Uuid
+  externalId     String
+  tank           Int
+  volumeLiters   Decimal  @db.Decimal(14, 3)
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  receivedAt     DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller @relation(fields: [controllerId], references: [id], onDelete: Cascade)
+  rawPacket RawPtsPacket? @relation(fields: [rawPacketId], references: [id])
+
+  @@unique([controllerId, externalId])
+}
+
+model Alert {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @db.Uuid
+  stationId      String        @db.Uuid
+  controllerId   String?       @db.Uuid
+  rawPacketId    String?       @db.Uuid
+  severity       AlertSeverity @default(WARNING)
+  code           String
+  message        String
+  state          String        @default("open")
+  occurredAt     DateTime
+  acknowledgedAt DateTime?
+  createdAt      DateTime      @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller? @relation(fields: [controllerId], references: [id])
+  rawPacket RawPtsPacket? @relation(fields: [rawPacketId], references: [id])
+
+  @@index([stationId, state, occurredAt])
+}
+
+model Payment {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  stationId      String   @db.Uuid
+  controllerId   String   @db.Uuid
+  rawPacketId    String?  @db.Uuid
+  externalId     String
+  amount         Decimal  @db.Decimal(14, 2)
+  method         String
+  paidAt         DateTime
+  receivedAt     DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller @relation(fields: [controllerId], references: [id], onDelete: Cascade)
+  rawPacket RawPtsPacket? @relation(fields: [rawPacketId], references: [id])
+
+  @@unique([controllerId, externalId])
+}
+
+model Shift {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  stationId      String   @db.Uuid
+  controllerId   String   @db.Uuid
+  rawPacketId    String?  @db.Uuid
+  externalId     String
+  operatorName   String?
+  openedAt       DateTime
+  closedAt       DateTime?
+  totals         Json?
+  receivedAt     DateTime @default(now())
+
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  controller Controller @relation(fields: [controllerId], references: [id], onDelete: Cascade)
+  rawPacket RawPtsPacket? @relation(fields: [rawPacketId], references: [id])
+
+  @@unique([controllerId, externalId])
+}
+
+model User {
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String     @db.Uuid
+  email          String     @unique
+  name           String
+  passwordHash   String?
+  status         UserStatus @default(INVITED)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  auditLogs AuditLog[]
+  roles UserRole[]
+  stationScopes StationScope[]
+
+  @@index([organizationId, status])
+}
+
+model Role {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  key            String
+  name           String
+  permissions    String[]
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users UserRole[]
+  stationScopes StationScope[]
+
+  @@unique([organizationId, key])
+}
+
+model UserRole {
+  userId String @db.Uuid
+  roleId String @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model StationScope {
+  id        String @id @default(uuid()) @db.Uuid
+  userId    String @db.Uuid
+  stationId String @db.Uuid
+  roleId    String? @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  role Role? @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, stationId])
+}
+
+model Card {
+  id                  String          @id @default(uuid()) @db.Uuid
+  organizationId      String          @db.Uuid
+  tag                 String
+  status              CardStatus      @default(ACTIVE)
+  accountType         CardAccountType @default(PREPAID)
+  cardholderName      String?
+  companyName         String?
+  vehicleNumber       String?
+  balance             Decimal         @default(0) @db.Decimal(14, 2)
+  dailyLimit          Decimal?        @db.Decimal(14, 2)
+  monthlyLimit        Decimal?        @db.Decimal(14, 2)
+  allowedFuelGradeIds Int[]
+  metadata            Json?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  authorizations CardAuthorization[]
+  ledger CardLedger[]
+  transactions PumpTransaction[]
+
+  @@unique([organizationId, tag])
+  @@index([organizationId, status])
+}
+
+model CardAuthorization {
+  id           String   @id @default(uuid()) @db.Uuid
+  cardId       String?  @db.Uuid
+  stationId    String?  @db.Uuid
+  controllerId String?  @db.Uuid
+  rawPacketId  String?  @db.Uuid
+  requestId    String?
+  tag          String
+  result       String
+  reason       String?
+  fuelGradeCode Int?
+  limitAmount  Decimal? @db.Decimal(14, 2)
+  limitVolumeLiters Decimal? @db.Decimal(14, 3)
+  metadata     Json?
+  requestedAt  DateTime @default(now())
+
+  card Card? @relation(fields: [cardId], references: [id])
+  station Station? @relation(fields: [stationId], references: [id])
+  controller Controller? @relation(fields: [controllerId], references: [id])
+  rawPacket RawPtsPacket? @relation(fields: [rawPacketId], references: [id])
+
+  @@index([tag, requestedAt])
+}
+
+model CardLedger {
+  id             String          @id @default(uuid()) @db.Uuid
+  cardId         String          @db.Uuid
+  stationId      String?         @db.Uuid
+  transactionId  String?         @db.Uuid
+  direction      LedgerDirection
+  amount         Decimal         @db.Decimal(14, 2)
+  volumeLiters   Decimal?        @db.Decimal(14, 3)
+  balanceAfter   Decimal?        @db.Decimal(14, 2)
+  description    String?
+  createdAt      DateTime        @default(now())
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  station Station? @relation(fields: [stationId], references: [id])
+  transaction PumpTransaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([cardId, createdAt])
+}
+
+model NotificationSubscription {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String?  @db.Uuid
+  channel        String
+  target         String
+  eventTypes     String[]
+  stationIds     String[]
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, channel, isActive])
+}
+
+model EventDelivery {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @db.Uuid
+  stationId      String?             @db.Uuid
+  eventType      String
+  channel        String
+  target         String
+  status         EventDeliveryStatus @default(PENDING)
+  payload        Json
+  error          String?
+  createdAt      DateTime            @default(now())
+  sentAt         DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  station Station? @relation(fields: [stationId], references: [id])
+
+  @@index([organizationId, status, createdAt])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String?  @db.Uuid
+  actorType      String
+  action         String
+  entityType     String
+  entityId       String?
+  ip             String?
+  userAgent      String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, createdAt])
+}

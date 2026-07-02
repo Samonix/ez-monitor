@@ -1,0 +1,1 @@
+export const ezMonitorTheme = { colors: { slate: '#141413', accent: '#d97757', success: '#788c5d', warning: '#c78e3f', danger: '#b04a4a', info: '#5c7ca3' }, radius: { sm: 8, md: 12 } };

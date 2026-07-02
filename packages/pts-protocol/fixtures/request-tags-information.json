@@ -1,0 +1,9 @@
+{
+  "Protocol": "jsonPTS",
+  "PtsId": "003A003A3435510938393730",
+  "Packets": [{
+    "Id": 1,
+    "Type": "RequestTagsInformation",
+    "Data": { "Tags": [{ "Tag": "1234567890ABCDEF", "Pump": 1, "Nozzle": 2, "FuelGradeId": 2, "FuelGradeName": "Diesel", "Price": 56.30 }] }
+  }]
+}
