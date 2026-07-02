@@ -14,7 +14,7 @@
 
 ## Архітектурні нотатки
 
-Значущі висновки про PTS-2, jsonPTS, RBAC, AI-доступ або deployment записувати в `doc/notes/**` або `doc/architecture/adr/**`.
+Значущі висновки про PTS-2, jsonPTS, RBAC, AI-доступ або deployment записувати в `doc/notes/**`, `doc/adr/**`, `doc/spec/**` або `doc/tasks/**`.
 
 ## MVP boundary
 
