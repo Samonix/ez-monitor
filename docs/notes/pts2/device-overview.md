@@ -15,5 +15,5 @@ PTS-2 forecourt controller - контролер АЗС для інтеграці
 
 Джерела:
 
-- Локальні PDF: `doc/vendor/doc/PTS-2-forecourt-controller-technical-guide.pdf`, `doc/vendor/doc/jsonPTS protocol for PTS-2 controller.pdf`.
+- Локальні PDF: `vendor/documents/PTS-2-forecourt-controller-technical-guide.pdf`, `vendor/documents/jsonPTS protocol for PTS-2 controller.pdf`.
 - Technotrade PTS-2 page: https://www.technotrade.ua/pts2-forecourt-controller.html

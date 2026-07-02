@@ -4,8 +4,8 @@
 
 ## Локальні джерела
 
-- `doc/vendor/doc/PTS-2-forecourt-controller-technical-guide.pdf` - огляд пристрою, remote server сценарії, PTS-2 можливості.
-- `doc/vendor/doc/jsonPTS protocol for PTS-2 controller.pdf` - jsonPTS envelope, upload packets, cards/tags, auth/HMAC.
+- `vendor/documents/PTS-2-forecourt-controller-technical-guide.pdf` - огляд пристрою, remote server сценарії, PTS-2 можливості.
+- `vendor/documents/jsonPTS protocol for PTS-2 controller.pdf` - jsonPTS envelope, upload packets, cards/tags, auth/HMAC.
 
 ## Web джерела
 
