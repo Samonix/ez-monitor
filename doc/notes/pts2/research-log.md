@@ -21,6 +21,7 @@
 - 2026-07-02: ping доступний, HTTP root без auth повертає `401 Unauthorized`.
 - 2026-07-02: Basic auth read-only доступ відкрив SPA UI; знайдені сторінки device information, configuration, fuel prices, pumps, tanks, reports, logging, diagnostics, firmware update.
 - Поточні сторонні параметри remote server не фіксуємо й не використовуємо; для EZ MONITOR вони будуть задані окремо під наш сервер.
+- 2026-07-02: проведено Playwright UI research із sanitized screenshots і interaction manifest: `doc/ui/research/pts2-controller/2026-07-02/`.
 
 ## Висновки для MVP
 
